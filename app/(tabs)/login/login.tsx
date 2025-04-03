@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
+import { useRouter } from 'expo-router';
 
-export default function CreateAccountScreen() {
+export default function LoginScreen() {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = () => {
     console.log('Username:', username);
     console.log('Password:', password);
+    router.navigate('./../dashboard/dashboard'); // Navigate to the home screen after submission
   };
 
   return (
@@ -27,7 +30,7 @@ export default function CreateAccountScreen() {
         secureTextEntry
       />
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit</Text>
+        <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
     </ThemedView>
   );
