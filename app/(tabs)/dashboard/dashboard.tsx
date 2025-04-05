@@ -9,8 +9,8 @@ export default function LandingScreen() {
     <ThemedView style={styles.container}>
       <Image source={require('@/assets/images/partial-react-logo.png')} style={styles.logo} />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText} onPress={() => router.navigate('./submitAppraisal')}>Submit Appraisal Request</Text>
+        <TouchableOpacity style={styles.button} onPress={() => router.navigate('./submitAppraisal')}>
+          <Text style={styles.buttonText}>Submit Appraisal Request</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={() => router.navigate('/')}>
           <Text style={styles.buttonText}>View Past Appraisals</Text>
