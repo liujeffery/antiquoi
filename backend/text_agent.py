@@ -13,7 +13,7 @@ def analyze_description(description: str) -> str:
 
     prompt = ("Given the following description of an item, please give a response about what the item is, "
               "a description of the item, and a price range. Please give your answer in the following form: "
-              "Item: <item here> \n Description: <description here> \n Max price: <max price> \n Min price <min price>. "
+              "Item: <item here> \n Description: <description here> \n Max price: <max price> \n Min price <min price> \n Condition: <condtion of either new, used like new, used good, or used fair>. "
               + description)
 
     response = client.chat.completions.create(
