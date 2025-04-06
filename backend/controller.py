@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from image_agent import analyze_image
 from text_agent import analyze_description
+from marketplace import generate_marketplace_text
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from your mobile app
