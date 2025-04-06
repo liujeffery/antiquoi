@@ -10,7 +10,7 @@ IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
 # Local image path
-image_path = "guitar.JPG"
+image_path = "./backend/uploads/guitar.jpg"
 
 #Read and encode the image
 with open(image_path, "rb") as file:
