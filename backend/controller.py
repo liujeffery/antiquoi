@@ -3,6 +3,7 @@ from flask_cors import CORS
 from image_agent import analyze_image
 from text_agent import analyze_description
 from marketplace import generate_marketplace_text
+import abc from ABC
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from your mobile app
@@ -24,6 +25,46 @@ def submit():
     print(analyze_description(description))
 
     return {'status': 'success'}, 200
+
+class Blackboard:
+    def __init__(self, user_image, user_description, knowledge_sources):
+        self.user_description = user_description
+        self.user_image = user_image
+        self.agent_data = {index: element for index, element in enumerate(knowledge_sources)}
+        self.final_result = null
+
+    def read_user_description(self):
+        return self.user_description
+
+    def read_user_image(self):
+        return self.user_image
+
+    def read_expert_data(self, key):
+        try:
+            return self.agent_data(key)
+        except KeyError:
+            print("Tried to access data from a nonexistent expert.")
+        except:
+            print("Something went wrong while trying to read blackboard agent data.")
+
+    def update_agent_data(self, key, data):
+        try:
+            self.agent_data(key) = data
+            return self.agent_data(key)
+        except KeyError:
+            print("Tried to access data from a nonexistent expert.")
+        except:
+            print("Something went wrong while trying to read blackboard agent data.")
+
+        return self.agent_data
+
+class BlackboardController:
+    def __init__(self):
+        pass
+
+    def run(self):
+        output1 = analyze_image('./uploads/clock.jpg')
+        output2 = analyze_description(description)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
