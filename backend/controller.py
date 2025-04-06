@@ -8,6 +8,26 @@ import abc from ABC
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from your mobile app
 
+# OLD CODE
+# @app.route('/submit', methods=['POST'])
+# def submit():
+#     title = request.form.get('title')
+#     description = request.form.get('description')
+#     image = request.files.get('image')  # This will be the uploaded image
+#
+#     if image:
+#         image.save(f"./uploads/{image.filename}")
+#
+#     print(f"Title: {title}")
+#     print(f"Description: {description}")
+#
+#     print(analyze_image('./uploads/clock.jpg'))
+#
+#     print(analyze_description(description))
+#
+#     return {'status': 'success'}, 200
+
+
 @app.route('/submit', methods=['POST'])
 def submit():
     title = request.form.get('title')
@@ -16,18 +36,16 @@ def submit():
 
     if image:
         image.save(f"./uploads/{image.filename}")
-    
-    print(f"Title: {title}")
-    print(f"Description: {description}")
 
-    print(analyze_image('./uploads/clock.jpg'))
+    blackboard = Blackboard(user_image_directory=f"./uploads/{image.filename}",
+        user_description=description,
+        knowledge_sources=[]) # NEED TO ADD KNOWLEDGE SOURCE CLASSES
 
-    print(analyze_description(description))
 
     return {'status': 'success'}, 200
 
 class Blackboard:
-    def __init__(self, user_image, user_description, knowledge_sources):
+    def __init__(self, user_image_directory, user_description, knowledge_sources):
         self.user_description = user_description
         self.user_image = user_image
         self.agent_data = {index: element for index, element in enumerate(knowledge_sources)}
@@ -58,13 +76,10 @@ class Blackboard:
 
         return self.agent_data
 
-class BlackboardController:
-    def __init__(self):
-        pass
-
-    def run(self):
-        output1 = analyze_image('./uploads/clock.jpg')
-        output2 = analyze_description(description)
+class KnowledgeSource(abc):
+    @abstractmethod
+    def get_expert_opinion(self):
+        ...
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
