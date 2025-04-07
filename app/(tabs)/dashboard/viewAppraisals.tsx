@@ -35,7 +35,7 @@ export default function ItemTableView() {
     if (selectedItem) {
       const text = `Item: ${selectedItem.item}\nDescription: ${selectedItem.description}\nMax Price: $${selectedItem.max_price}\nMin Price: $${selectedItem.min_price}\nCondition: ${selectedItem.condition}`;
       Clipboard.setString(text);
-      Alert.alert('Copied to Clipboard', 'Item details have been copied.');
+      Alert.alert('Copied to Clipboard', 'Item details have been copied. \n Please navigate to https://www.facebook.com/marketplace/ to share.');
     }
   };
 

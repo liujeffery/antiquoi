@@ -88,8 +88,12 @@ def search_w_rev_results(image_url):
     print(f"Average price: {avg}")
     return avg
     
+def search_web_image(image_path):
+    # Upload the image and get the URL
+    image_url = upload_image(image_path)
+    if not image_url:
+        return None
 
-# Local image path
-image_path = "./backend/uploads/clock.jpg"
-image_url = upload_image(image_path)
-avg = search_w_rev_results(image_url)
+    # Search for the item using reverse image search and get the average price
+    avg_price = search_w_rev_results(image_url)
+    return avg_price

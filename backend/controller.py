@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from image_agent import analyze_image
 from text_agent import analyze_description
+from reverse_image_search import search_web_image
 import json
 
 app = Flask(__name__)
@@ -22,6 +23,8 @@ def submit():
     print(analyze_image('./uploads/clock.jpg'))
 
     print(analyze_description(description))
+
+    print(search_web_image('./uploads/clock.jpg'))
 
     return {'status': 'success'}, 200
 
