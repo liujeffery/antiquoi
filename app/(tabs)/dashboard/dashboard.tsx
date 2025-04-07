@@ -12,7 +12,7 @@ export default function LandingScreen() {
         <TouchableOpacity style={styles.button} onPress={() => router.navigate('./submitAppraisal')}>
           <Text style={styles.buttonText}>Submit Appraisal Request</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => router.navigate('/')}>
+        <TouchableOpacity style={styles.button} onPress={() => router.navigate('./viewAppraisals')}>
           <Text style={styles.buttonText}>View Past Appraisals</Text>
         </TouchableOpacity>
       </View>

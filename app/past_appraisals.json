@@ -1,0 +1,18 @@
+{
+    "items": [
+      {
+        "item": "Langford Cellars Wall Clock",
+        "description": "A round wall clock with a vintage design, featuring Roman numerals, a black frame, and branding for 'Langford Cellars Sauvignon Blanc.'",
+        "max_price": 30,
+        "min_price": 15,
+        "condition": "New"
+      },
+      {
+        "item": "Langford Cellars Wall Clock",
+        "description": "A round wall clock with a vintage design, featuring Roman numerals, a black frame, and branding for 'Langford Cellars Sauvignon Blanc.'",
+        "max_price": 30,
+        "min_price": 15,
+        "condition": "New"
+      }
+    ]
+}
