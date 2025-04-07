@@ -78,7 +78,7 @@ def search_w_rev_results(image_url):
     print("\nMatching Shopping Results:")
     print(f"Number of items found: {len(items)}")
     prices = []
-    for item in items[:5]:  # Top 5 results
+    for item in items[:5]:  # Top 5 results only
         title = item.get("title", "No title")
         price = item.get("extracted_price", "No price")
         prices.append(price)
@@ -90,6 +90,6 @@ def search_w_rev_results(image_url):
     
 
 # Local image path
-image_path = "./backend/uploads/guitar.jpg"
+image_path = "./backend/uploads/clock.jpg"
 image_url = upload_image(image_path)
 avg = search_w_rev_results(image_url)
