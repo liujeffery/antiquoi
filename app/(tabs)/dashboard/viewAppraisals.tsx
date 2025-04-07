@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
 import pastAppraisals from '../../past_appraisals.json';
-import { Paths, File} from 'expo-file-system/next';
 import * as Clipboard from 'expo-clipboard';
 
 interface Item {
@@ -10,6 +9,7 @@ interface Item {
   max_price: number;
   min_price: number;
   condition: string;
+  appraisal_correct: string | null;
 }
 
 interface Appraisals {
@@ -40,22 +40,30 @@ export default function ItemTableView() {
   };
 
   const handleConfirmAppraisal = async () => {
+    console.log('test');
     if (selectedItem && appraisalCorrect !== null) {
       const updatedItems = pastAppraisals.items.map((item) =>
         item.item === selectedItem.item ? { ...item, appraisal_correct: appraisalCorrect } : item
       );
 
       const updatedData = { items: updatedItems };
-      const file = new File(Paths.cache, '../../past_appraisals.json');
+      console.log('Updated appraisal data:', JSON.stringify(updatedData, null, 2));
 
       try {
-        file.create();
-        file.write(JSON.stringify(updatedData));
-        Alert.alert('Appraisal feedback saved');
+        const response = await fetch('http://10.0.2.2:5000/updateAppraisal', {
+          method: 'POST',
+          body: JSON.stringify(updatedData, null, 2),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+    
+        const result = await response.json();
+        console.log(result);
       } catch (error) {
-        console.error('Failed to update appraisal data:', error);
+        console.error('Error updating .json file:', error);
       }
-    }
+    };
   };
 
   return (
@@ -79,6 +87,8 @@ export default function ItemTableView() {
           <Text style={styles.detailText}>Max Price: ${selectedItem.max_price}</Text>
           <Text style={styles.detailText}>Min Price: ${selectedItem.min_price}</Text>
           <Text style={styles.detailText}>Condition: {selectedItem.condition}</Text>
+          {selectedItem.appraisal_correct ? <Text style={styles.detailText}>Appraisal Correct: {selectedItem.appraisal_correct}</Text>
+            : <Text style={styles.detailText}>Appraisal Correct: Not yet confirmed</Text>}
           <Text style={styles.detailText}></Text>
           <Text style={styles.detailTextAppraisal}>Is this appraisal correct?</Text>
 
@@ -101,7 +111,7 @@ export default function ItemTableView() {
           </Pressable>
 
           <Pressable
-            onPress={() => { setSelectedItem(null);}}
+            onPress={() => { setSelectedItem(null); }}
             style={styles.backButton}>
             <Text style={styles.backButtonText}>Back to List</Text>
           </Pressable>

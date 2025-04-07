@@ -1,8 +1,8 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from image_agent import analyze_image
 from text_agent import analyze_description
-from marketplace import generate_marketplace_text
+import json
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from your mobile app
@@ -24,6 +24,19 @@ def submit():
     print(analyze_description(description))
 
     return {'status': 'success'}, 200
+
+@app.route('/updateAppraisal', methods=['POST'])
+def update_appraisal():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON received'}), 400
+
+    try:
+        with open('../app/past_appraisals.json', 'w') as f:
+            json.dump(data, f, indent=2)
+        return jsonify({'status': 'Appraisal data updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -9,8 +9,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const handleSubmit = () => {
-    console.log('Username:', username);
-    console.log('Password:', password);
     router.navigate('./../dashboard/dashboard'); // Navigate to the home screen after submission
   };
 

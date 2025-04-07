@@ -9,8 +9,6 @@ export default function CreateAccountScreen() {
   const [password, setPassword] = useState('');
 
   const handleSubmit = () => {
-    console.log('Username:', username);
-    console.log('Password:', password);
     router.push('/'); // Navigate to the home screen after submission
   };
 
