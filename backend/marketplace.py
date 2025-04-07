@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def generate_marketplace_text(description: str) -> str:
+def generate_marketplace_text(description: str, name: str, price: str, condition: str) -> str:
     dps_key = os.getenv('DPS_API')
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -21,4 +21,4 @@ def generate_marketplace_text(description: str) -> str:
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.choices[0].message.content
+    return "Title: "+name+"\nPrice: "+price+"\n"+"Category: Antiques & Collectibles\nCondition: "+condition+"\n"+response.choices[0].message.content
