@@ -1,102 +1,105 @@
-import requests
 import os
+import requests
 import base64
-import json
 from dotenv import load_dotenv
-import knowledge_source
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-class reverse_image_search(knowledge_source):
-    load_dotenv()
+# Flask app setup
+app = Flask(__name__)
+CORS(app)
+load_dotenv()
 
-    def __init__(self):
-        self.IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
-        self.SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
-    def upload_image(self, image_path):
-        #Read and encode the image
-        with open(image_path, "rb") as file:
-            image_data = base64.b64encode(file.read()).decode("utf-8")
-        
+def upload_image(image_path):
+    with open(image_path, "rb") as file:
+        image_data = base64.b64encode(file.read()).decode("utf-8")
 
-        #Upload to ImgBB
-        url = "https://api.imgbb.com/1/upload"
-        payload = {
-            "key": self.IMGBB_API_KEY,
-            "image": image_data,
+    payload = {
+        "key": IMGBB_API_KEY,
+        "image": image_data,
+    }
+    response = requests.post("https://api.imgbb.com/1/upload", data=payload)
+
+    if response.status_code == 200:
+        image_url = response.json()["data"]["url"]
+        print(f"Uploaded to ImgBB: {image_url}")
+        return image_url
+    else:
+        print("Upload failed:", response.text)
+        return None
+
+def get_title_from_image(image_url, result_num):
+    params = {
+        "engine": "google_reverse_image",
+        "image_url": image_url,
+        "api_key": SERPAPI_KEY,
+    }
+    search_response = requests.get("https://serpapi.com/search", params=params)
+    search_data = search_response.json()
+    result = search_data.get("image_results", [])[result_num-1] if search_data.get("image_results") else None
+
+    if not result:
+        print("No image results found")
+        return None
+
+    return result.get("title", "")
+
+def search_w_rev_results(image_url):
+    have_results = False
+    items = None
+    i = 1
+
+    while not have_results:
+        new_title = get_title_from_image(image_url, i)
+        if not new_title:
+            return 0
+
+        shopping_params = {
+            "engine": "google_shopping",
+            "q": new_title,
+            "api_key": SERPAPI_KEY,
         }
-        response = requests.post(url, data=payload)
+        shopping_res = requests.get("https://serpapi.com/search", params=shopping_params)
+        shopping_data = shopping_res.json()
 
-        if response.status_code == 200:
-            image_url = response.json()["data"]["url"]
-            print(f"Uploaded to ImgBB: {image_url}")
-            return image_url
+        if shopping_data.get("shopping_results"):
+            have_results = True
+            items = shopping_data["shopping_results"]
         else:
-            print("Upload failed:", response.text)
-            return None
+            i += 1
+            if i > 40:
+                return 0
 
-    def get_title_from_image(self, image_url, result_num):
-        #Use SerpApi to reverse search
-        params = {
-            "engine": "google_reverse_image",
-            "image_url": image_url,
-            "api_key": self.SERPAPI_KEY,
-        }
+    prices = [item.get("extracted_price") for item in items[:5] if item.get("extracted_price")]
 
-        serpapi_url = "https://serpapi.com/search"
-        search_response = requests.get(serpapi_url, params=params)
-        search_data = search_response.json()
-        result = search_data.get("image_results", [])[result_num-1] if search_data.get("image_results") else None
-        if not result:
-            print("No image results found")
-            return None
-        new_title = result.get("title","")
-        print(f"Detected item title: {new_title}")
-        return new_title
+    if not prices:
+        return 0
 
-    def search_w_rev_results(self, image_url):
-        have_results = False
-        items = None
-        i = 1
-        while not have_results:
-            new_title = reverse_image_search.get_title_from_image(image_url, i)
-            #Search on Google Shopping
-            shopping_params = {
-                "engine": "google_shopping",
-                "q": new_title,
-                "api_key": self.SERPAPI_KEY,
-            }
+    avg = sum(prices) / len(prices)
+    return avg
 
-            shopping_res = requests.get("https://serpapi.com/search", params=shopping_params)
-            shopping_data = shopping_res.json()
+@app.route('/webhook', methods=['POST'])
+def reverse_image_webhook():
+    try:
+        data = request.get_json()
+        image_path = data.get("image_path")
 
-            if shopping_data.get("shopping_results"):
-                have_results = True
-                items = shopping_data.get("shopping_results", [])
-            else:
-                if i < 40:
-                    i+=1
-                else: 
-                    return 0
+        if not image_path or not os.path.exists(image_path):
+            return jsonify({"error": "Invalid image path"}), 400
 
-        print("\nMatching Shopping Results:")
-        print(f"Number of items found: {len(items)}")
-        prices = []
-        for item in items[:5]:  # Top 5 results only
-            title = item.get("title", "No title")
-            price = item.get("extracted_price", "No price")
-            prices.append(price)
-            link = item.get("product_link", "No link")
-            print(f"- {title}\n  {price}\n  {link}\n")
-        avg =sum(prices) / len(prices)
-        print(f"Average price: {avg}")
-        return avg
-        
-    def execute(image_path):
-        # Upload the image and get the URL
-        image_url = reverse_image_search.upload_image(image_path)
+        image_url = upload_image(image_path)
         if not image_url:
-            return None
+            return jsonify({"error": "Image upload failed"}), 500
 
-        # Search for the item using reverse image search and get the average price
-        avg_price = reverse_image_search.search_w_rev_results(image_url)
-        return avg_price
+        avg_price = search_w_rev_results(image_url)
+        return jsonify({"average_price": avg_price}), 200
+
+    except Exception as e:
+        print(f"Error in reverse_image_search webhook: {e}")
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(port=5300)

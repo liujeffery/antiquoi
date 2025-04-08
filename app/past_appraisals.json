@@ -1,11 +1,11 @@
 {
   "items": [
     {
-      "item": "Promotional Wall Clock for Langford Cellars Sauvignon Blanc",
-      "description": "A vintage-inspired round wall clock with Roman numerals, a sleek black frame, and branded with 'Langford Cellars Sauvignon Blanc.' Designed as both a functional timepiece and decorative item for wine enthusiasts, showcasing classic aesthetics and subtle promotional branding.",
-      "max_price": 50,
-      "min_price": 15,
-      "condition": "New",
+      "item": "Rustic Wall Clock",
+      "description": "A vintage-inspired wall clock likely crafted from reclaimed wood or distressed materials, possibly featuring wine-themed accents such as grapevine carvings, barrel-stave construction, or a weathered finish. Designed to evoke a countryside or winery aesthetic, it may include Roman numerals or painted details.",
+      "max_price": 175,
+      "min_price": 40,
+      "condition": "Used good",
       "appraisal_correct": "No"
     }
   ]

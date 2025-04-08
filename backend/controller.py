@@ -1,88 +1,91 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from image_agent import execute
-from text_agent import analyze_description
-from reverse_image_search import search_web_image
-import json
-import blackboard
+import json, requests, os
 
-class controller:
-    app = Flask(__name__)
-    CORS(app)  # Allow cross-origin requests from mobile app
+app = Flask(__name__)
+CORS(app)
 
-    def __init__(self):
-        self.blackboard = blackboard()
-        self.title = request.form.get('title')
-        self.description = request.form.get('description')
-        self.image = request.files.get('image')  # This will be the uploaded image
+UPLOAD_FOLDER = "./uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-        if self.image:
-            self.image.save(f"./uploads/{self.image.filename}")
-        
-        print(f"Title: {self.title}")
-        print(f"Description: {self.description}")
+AGENT_WEBHOOKS = {
+    "image": "http://localhost:5100/webhook",
+    "text": "http://localhost:5200/webhook",
+    "reverse": "http://localhost:5300/webhook"
+}
 
-    @app.route('/submit', methods=['POST'])
-    def submit(self):
-     
+@app.route('/submit', methods=['POST'])
+def submit():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    image = request.files.get('image')
+    image_path = None
 
-        response1 = execute('./uploads/clock.jpg')
-        repsonse2 = analyze_description(self.description)
-        response3 = search_web_image('./uploads/clock.jpg')
+    if image:
+        image_path = os.path.join(UPLOAD_FOLDER, image.filename)
+        image.save(image_path)
 
-        cleaned_response1 = response1.strip('`').replace('```json', '').replace('```', '').strip().replace("json", "")
-        cleaned_response2 = repsonse2.strip('`').replace('```json', '').replace('```', '').strip().replace("json", "")
+    print(f"Title: {title}")
+    print(f"Description: {description}")
 
-        response_data1 = json.loads(cleaned_response1)
-        response_data2 = json.loads(cleaned_response2)
+    # Prepare payloads
+    try:
+        # Send webhook POSTs
+        res1 = requests.post(AGENT_WEBHOOKS["image"], json={"image_path": "./uploads/upload.jpg"})
+        res2 = requests.post(AGENT_WEBHOOKS["text"], json={"description": description})
+        res3 = requests.post(AGENT_WEBHOOKS["reverse"], json={"image_path": "./uploads/upload.jpg"})
 
-        price1 = (response_data1['Max price'] + response_data1['Min price']) / 2
-        price2 = (response_data2['Max price'] + response_data2['Min price']) / 2
+        print("Response 1:", res1.text)
+        print("Response 2:", res2.text)
+        print("Response 3:", res3.text)
 
-        average_price = (price1 + price2) / 2 + response3
-        to_return = ""
+        # Parse responses
+        response1 = res1.text.strip('`').replace('```json', '').replace('```', '').strip().replace("json", "")
+        response2 = res2.text.strip('`').replace('```json', '').replace('```', '').strip().replace("json", "")
 
-        if abs(average_price - price1) < abs(average_price - price2):
-            print("Price 1 is closer to the average price.")
-            to_return = cleaned_response1
-        else:
-            print("Price 2 is closer to the average price.")
-            to_return = cleaned_response2
+        data1 = json.loads(response1)
+        data2 = json.loads(response2)
+        data3 = json.loads(res3.text)
 
-        parsed = json.loads(to_return)
+        price1 = (data1['Max price'] + data1['Min price']) / 2
+        price2 = (data2['Max price'] + data2['Min price']) / 2
+
+        average_price = (price1 + price2) / 2 + data3['average_price']
+        to_return = data1 if abs(average_price - price1) < abs(average_price - price2) else data2
+
         converted = {
             "items": [
                 {
-                    "item": parsed["Item"],
-                    "description": parsed["Description"],
-                    "max_price": parsed["Max price"],
-                    "min_price": parsed["Min price"],
-                    "condition": parsed["Condition"].capitalize()
+                    "item": to_return["Item"],
+                    "description": to_return["Description"],
+                    "max_price": to_return["Max price"],
+                    "min_price": to_return["Min price"],
+                    "condition": to_return["Condition"].capitalize()
                 }
             ]
         }
 
-        try:
-            with open('../app/past_appraisals.json', 'w') as f:
-                json.dump(converted, f, indent=2)
-        except Exception as e:
-            print(f"Error writing to file: {e}")
-            return jsonify({'error': 'Failed to write appraisal data'}), 500
+        with open('../app/past_appraisals.json', 'w') as f:
+            json.dump(converted, f, indent=2)
 
         return {'status': 'success'}, 200
 
-    @app.route('/updateAppraisal', methods=['POST'])
-    def update_appraisal():
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON received'}), 400
+    except Exception as e:
+        print(f"Webhook Error: {e}")
+        return jsonify({'error': str(e)}), 500
 
-        try:
-            with open('../app/past_appraisals.json', 'w') as f:
-                json.dump(data, f, indent=2)
-            return jsonify({'status': 'Appraisal data updated successfully'}), 200
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+@app.route('/updateAppraisal', methods=['POST'])
+def update_appraisal():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON received'}), 400
 
-    if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=5000, debug=True)
+    try:
+        with open('../app/past_appraisals.json', 'w') as f:
+            json.dump(data, f, indent=2)
+        return jsonify({'status': 'Appraisal data updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,29 +1,50 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-import knowledge_source
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-class text_agent(knowledge_source):
-    load_dotenv()
+# Flask app setup
+app = Flask(__name__)
+CORS(app)
+load_dotenv()
 
-    def __init__(self):
-        self.dps_key = os.getenv('DPS_API')
+# OpenRouter (DeepSeek) client setup
+dps_key = os.getenv('DPS_API')
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=dps_key,
+)
 
-    def execute(self, description: str) -> str:
-        client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=self.dps_key,
+@app.route('/webhook', methods=['POST'])
+def analyze_text_webhook():
+    try:
+        data = request.get_json()
+        description = data.get('description')
+
+        if not description:
+            return jsonify({'error': 'No description provided'}), 400
+
+        prompt = (
+            "Given the following description of an item, please give a response about what the item is, "
+            "a description of the item, and a price range. Please give your answer in a .json format "
+            "with the following fields: Item: <item here> \n Description: <description here> \n "
+            "Max price: <max price, integer> \n Min price: <min price, integer> \n "
+            "Condition: <condition of one of new, used like new, used good, or used fair>. \n\n"
+            f"Description: {description}"
         )
-
-        prompt = ("Given the following description of an item, please give a response about what the item is, "
-                "a description of the item, and a price range. Please give your answer in a .json format"
-                " with the following fields: Item: <item here> \n Description: <description here> \n Max price: <max price. integer> \n Min price <min price, integer> \n "
-                "Condition: <condtion of one of new, used like new, used good, or used fair>. "
-                + description)
 
         response = client.chat.completions.create(
             model="deepseek/deepseek-r1:free",
             messages=[{"role": "user", "content": prompt}]
         )
 
-        return response.choices[0].message.content
+        return response.choices[0].message.content, 200
+
+    except Exception as e:
+        print(f"Error in text_agent webhook: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(port=5200)
