@@ -23,7 +23,7 @@ class controller:
         print(f"Description: {self.description}")
 
     @app.route('/submit', methods=['POST'])
-    def submit():
+    def submit(self):
      
 
         response1 = execute('./uploads/clock.jpg')
